@@ -211,11 +211,14 @@ public class %${EntityName}%DAO {
 		while (startIndex < objList.size()) {
 			insertMultipleBatch(objList.subList(startIndex, Math.min(startIndex + batchMount * batchWindowSize, objList.size())), batchWindowSize);
 			startIndex += batchMount * batchWindowSize;
-			System.out.println(String.format("[inserting TestDbtest] %d / %d, cost %d ms, total estimation %d ms", startIndex, objList.size(), //
+			System.out.println(String.format("[inserting %${EntityName}%] %d / %d, cost %d ms, total estimation %d ms", startIndex, objList.size(), //
 					(System.currentTimeMillis() - t0), (System.currentTimeMillis() - t0) * objList.size() / startIndex));
 		}
 	}
-
+	
+	/**
+	 * update all field anchor by field <b>id</b>
+	 */
 	public void update(%${EntityName}% obj) {
 		String sql = String.format("%${SqlUpdate}%", dbName);
 		DBConnection conn = pool.getConnection();
@@ -232,6 +235,9 @@ public class %${EntityName}%DAO {
 		}
 	}
 
+	/**
+	 * batch update all field anchor by each elements' field <b>id</b>
+	 */
 	public void updateBatch(List<%${EntityName}%> objList) {
 		String sql = String.format("%${SqlUpdate}%", dbName);
 
@@ -257,33 +263,40 @@ public class %${EntityName}%DAO {
 		}
 	}
 	
-	public void updateBatchWithIntegerFieldSelection(String whereField, Integer whereParamCount, List<List<Integer>> whereInValueList, //
-															 String setField, List<Integer> setToValueList) {
+	/**
+	 * 	Batch(<b><i>i</i></b> ):
+	 *		UPDATE %${SimpleSqlTable}% SET <b>setField</b> = <b>setToValueList[<i>i</i> ]</b> WHERE <b>whereField</b> IN 
+	 *		(<b>whereInValueList[<i>i</i> ][0 : length]</b>)  
+	 */
+	public void updateBatchWithIntegerFieldSelection(String whereField, List<List<Integer>> whereInValueList, //
+			String setField, List<Integer> setToValueList) {
 		if (null == whereInValueList || whereInValueList.size() == 0) {
-			return ;
-		} else if(whereParamCount != whereInValueList.get(0).size() || whereInValueList.size() != setToValueList.size()) {
+			return;
+		} else if (whereInValueList.size() != setToValueList.size()) {
 			new Exception("Mismatch parameter size").printStackTrace();
 			return;
 		}
 
-		StringBuilder sqlBuilder = new StringBuilder( //
-			String.format("UPDATE %${SqlTable}% SET %s = ? WHERE %s IN (", dbName, setField, whereField));
-		for (int i = 0; i < whereParamCount; i++) {
-			sqlBuilder.append('?').append(',');
-		}
-		sqlBuilder.setCharAt(sqlBuilder.length() - 1, ')');
-
-		String sql = sqlBuilder.toString();
-		
 		DBConnection conn = pool.getConnection();
 		PreparedStatement ps = null;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement(sql);
-			for(int i=0; i<whereInValueList.size(); i++) {
+
+			for (int i = 0; i < whereInValueList.size(); i++) {
+				int whereParamCount = whereInValueList.size();
+				StringBuilder sqlBuilder = new StringBuilder( //
+						String.format("UPDATE %${SqlTable}% SET %s = ? WHERE %s IN (", dbName, setField, whereField));
+				for (int j = 0; j < whereParamCount; j++) {
+					sqlBuilder.append('?').append(',');
+				}
+				sqlBuilder.setCharAt(sqlBuilder.length() - 1, ')');
+
+				String sql = sqlBuilder.toString();
+				ps = conn.prepareStatement(sql);
+
 				SqlConstructUtil.__safeSetInt(ps, 1, setToValueList.get(i));
 				for (int j = 0; j < whereParamCount; j++) {
-					ps.setInt(j + 2, whereInValueList.get(i).get(j));
+					SqlConstructUtil.__safeSetInt(ps, j + 2, whereInValueList.get(i).get(j));
 				}
 				ps.addBatch();
 			}
@@ -295,7 +308,10 @@ public class %${EntityName}%DAO {
 			ConnectionPool.close(conn, ps);
 		}
 	}
-
+	
+	/**
+	 * UPDATE %${SimpleSqlTable}% SET <b>setField</b> = <b>setToValue</b> WHERE <b>whereField</b> IN (<b>whereInValue[0 : length]</b>)
+	 */
 	public void updateWithIntegerFieldSelection(String whereField, List<Integer> whereInValue, String setField, Integer setToValue) {
 		if (null == whereInValue || whereInValue.size() == 0 ) {
 			return ;
@@ -316,7 +332,87 @@ public class %${EntityName}%DAO {
 			ps = conn.prepareStatement(sql);
 			SqlConstructUtil.__safeSetInt(ps, 1, setToValue);
 			for (int i = 0; i < whereInValue.size(); i++) {
-				ps.setInt(i + 2, whereInValue.get(i));
+				SqlConstructUtil.__safeSetInt(ps, i + 2, whereInValue.get(i));
+			}
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.close(conn, ps);
+		} 
+	}
+
+	/**
+	 * 	Batch(<b><i>i</i></b> ):
+	 *		UPDATE %${SimpleSqlTable}% SET <b>setField</b> = <b>setToValueList[<i>i</i> ]</b> WHERE <b>whereField</b> IN 
+	 *		(<b>whereInValueList[<i>i</i> ][0 : length]</b>)  
+	 *
+	 */
+	public void updateBatchWithStringFieldSelection(String whereField, List<List<String>> whereInValueList, //
+			String setField, List<String> setToValueList) {
+		if (null == whereInValueList || whereInValueList.size() == 0) {
+			return;
+		} else if (whereInValueList.size() != setToValueList.size()) {
+			new Exception("Mismatch parameter size").printStackTrace();
+			return;
+		}
+
+		DBConnection conn = pool.getConnection();
+		PreparedStatement ps = null;
+		try {
+			conn.setAutoCommit(false);
+
+			for (int i = 0; i < whereInValueList.size(); i++) {
+				int whereParamCount = whereInValueList.size();
+				StringBuilder sqlBuilder = new StringBuilder( //
+						String.format("UPDATE %${SqlTable}% SET %s = ? WHERE %s IN (", dbName, setField, whereField));
+				for (int j = 0; j < whereParamCount; j++) {
+					sqlBuilder.append('?').append(',');
+				}
+				sqlBuilder.setCharAt(sqlBuilder.length() - 1, ')');
+
+				String sql = sqlBuilder.toString();
+				ps = conn.prepareStatement(sql);
+
+				SqlConstructUtil.__safeSetString(ps, 1, setToValueList.get(i));
+				for (int j = 0; j < whereParamCount; j++) {
+					SqlConstructUtil.__safeSetString(ps, j + 2, whereInValueList.get(i).get(j));
+				}
+				ps.addBatch();
+			}
+			ps.executeBatch();
+			conn.setAutoCommit(true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.close(conn, ps);
+		}
+	}
+	
+	/**
+	 * UPDATE %${SimpleSqlTable}% SET <b>setField</b> = <b>setToValue</b> WHERE <b>whereField</b> IN (<b>whereInValue[0 : length]</b>)
+	 */
+	public void updateWithStringFieldSelection(String whereField, List<String> whereInValue, String setField, String setToValue) {
+		if (null == whereInValue || whereInValue.size() == 0 ) {
+			return ;
+		}
+
+		StringBuilder sqlBuilder = new StringBuilder( //
+			String.format("UPDATE %${SqlTable}% SET %s = ? WHERE %s IN (", dbName, setField, whereField));
+		for (int i = 0; i < whereInValue.size(); i++) {
+			sqlBuilder.append('?').append(',');
+		}
+		sqlBuilder.setCharAt(sqlBuilder.length() - 1, ')');
+
+		String sql = sqlBuilder.toString();
+		
+		DBConnection conn = pool.getConnection();
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement(sql);
+			SqlConstructUtil.__safeSetString(ps, 1, setToValue);
+			for (int i = 0; i < whereInValue.size(); i++) {
+				SqlConstructUtil.__safeSetString(ps, i + 2, whereInValue.get(i));
 			}
 			ps.executeUpdate();
 		} catch (SQLException e) {
@@ -436,7 +532,7 @@ public class %${EntityName}%DAO {
 		while (startIndex < idList.size()) {
 			deleteMultipleBatchById(idList.subList(startIndex, Math.min(startIndex + batchMount * batchWindowSize, idList.size())), batchWindowSize);
 			startIndex += batchMount * batchWindowSize;
-			System.out.println(String.format("[deleting TestDbtest] %d / %d, cost %d ms, total estimation %d ms", startIndex, idList.size(), //
+			System.out.println(String.format("[deleting %${EntityName}%] %d / %d, cost %d ms, total estimation %d ms", startIndex, idList.size(), //
 					(System.currentTimeMillis() - t0), (System.currentTimeMillis() - t0) * idList.size() / startIndex));
 		}
 	}

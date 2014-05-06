@@ -147,6 +147,7 @@ public class JavaModelFileBuilder {
 		replacement.add(new String[] { "EntityPackage", entityPackageName + "." + StringsBuildUtil.toCamelCase(prefix + "_" + name) });
 		replacement.add(new String[] { "DAOPackage", packageName });
 		replacement.add(new String[] { "EntityName", StringsBuildUtil.toCamelCase(prefix + "_" + name) });
+		replacement.add(new String[] { "SimpleSqlTable", new StringBuilder().append(name).toString() });
 		replacement.add(new String[] { "SqlTable", new StringBuilder().append("%s.").append(name).toString() });
 		replacement.add(new String[] { "DbName", dbName });
 		{
