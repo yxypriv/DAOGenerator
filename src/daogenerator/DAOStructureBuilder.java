@@ -11,6 +11,8 @@ public class DAOStructureBuilder {
 	
 	public static void main(String[] args) {
 		List<DBConfig> configList = new ArrayList<DAOStructureBuilder.DBConfig>();
+		
+		configList.add(new DBConfig("crawler", "Crawler", new String[]{"abc_photo", "abc_photo_page"}));
 //		configList.add(new DBConfig("arnet_db1_combine", "aminer_db1_combine", //
 //				new String[]{"publication", "na_person", "na_author2pub", "jconf", "publication_ext", "contact_info"}));
 	
@@ -26,8 +28,8 @@ public class DAOStructureBuilder {
 //		configList.add(new DBConfig("nsfc_aminer_combine", "nsfc_aminer_combine", //
 //				new String[]{"publication", "na_person", "na_author2pub", "jconf", "publication_ext", "contact_info"}));
 //	
-		configList.add(new DBConfig("nsfc_aminer_combine", "nsfc_aminer_combine", new String[]{"publication", "na_person"}));
-		configList.add(new DBConfig("test", "test", new String[]{"dbtest"}));
+//		configList.add(new DBConfig("nsfc_aminer_combine", "nsfc_aminer_combine", new String[]{"publication", "na_person"}));
+//		configList.add(new DBConfig("test", "test", new String[]{"dbtest"}));
 //		
 //		configList.add(new DBConfig("arnet_db", "aminer", //
 //				new String[]{"publication", "na_person", "na_author2pub", "jconf", "publication_ext", "contact_info",//
@@ -46,8 +48,8 @@ public class DAOStructureBuilder {
 //		}
 //		DBConfig[] allConfig = new DBConfig[] {aminerConfig, nsfcConfig, nsfc2Config};
 		
-		JavaModelFileBuilder builder = new JavaModelFileBuilder("D:\\Users\\yxy\\DataUpdate\\DAOGenerator\\src", "services.dao");
-//		JavaModelFileBuilder builder = new JavaModelFileBuilder();
+//		JavaModelFileBuilder builder = new JavaModelFileBuilder("D:\\Users\\yxy\\DataUpdate\\DAOGenerator\\src", "services.dao");
+		JavaModelFileBuilder builder = new JavaModelFileBuilder();
 		for(DBConfig currentConfig : configList) {
 			for (String table : currentConfig.tables) {
 				List<MysqlColumn> showColumnsFromTable = MysqlDao.showColumnsFromTable(currentConfig.dbName, table);

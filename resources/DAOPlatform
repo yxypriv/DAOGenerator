@@ -726,6 +726,43 @@ public class %${EntityName}%DAO {
 		}
 		return result;
 	}
+	
+	public List<%${EntityName}%> selectByMultipleStringField(String field, String[] valueList) {
+		if (null == valueList) {
+			return null;
+		} else if (valueList.length == 0) {
+			return new ArrayList<%${EntityName}%>();
+		}
+
+		StringBuilder sqlBuilder = new StringBuilder(String.format("SELECT * FROM %s.abc_photo WHERE %s IN (", dbName, field));
+		for (int i = 0; i < valueList.length; i++) {
+			sqlBuilder.append('?').append(',');
+		}
+		sqlBuilder.setCharAt(sqlBuilder.length() - 1, ')');
+
+		String sql = sqlBuilder.toString();
+
+		List<%${EntityName}%> result = new ArrayList<%${EntityName}%>();
+		DBConnection conn = pool.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = conn.prepareStatement(sql);
+			for (int i = 0; i < valueList.length; i++) {
+				SqlConstructUtil.__safeSetString(ps, i + 1, valueList[i]);
+			}
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				result.add(_constructResult(rs));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.close(conn, ps, rs);
+		}
+		return result;
+	}
 
 	public List<%${EntityName}%> selectByMultipleStringFieldWithLimitedWindow(String field, List<String> valueList, Integer windowSize) {
 		if (null == valueList)
@@ -821,6 +858,43 @@ public class %${EntityName}%DAO {
 			ps = conn.prepareStatement(sql);
 			for (int i = 0; i < valueList.size(); i++) {
 				SqlConstructUtil.__safeSetInt(ps, i+1, valueList.get(i));
+			}
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				result.add(_constructResult(rs));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.close(conn, ps, rs);
+		}
+		return result;
+	}
+
+	public List<%${EntityName}%> selectByMultipleIntegerField(String field, Integer[] valueList) {
+		if (null == valueList) {
+			return null;
+		} else if (valueList.length == 0) {
+			return new ArrayList<%${EntityName}%>();
+		}
+
+		StringBuilder sqlBuilder = new StringBuilder(String.format("SELECT * FROM %s.abc_photo WHERE %s IN (", dbName, field));
+		for (int i = 0; i < valueList.length; i++) {
+			sqlBuilder.append('?').append(',');
+		}
+		sqlBuilder.setCharAt(sqlBuilder.length() - 1, ')');
+
+		String sql = sqlBuilder.toString();
+
+		List<%${EntityName}%> result = new ArrayList<%${EntityName}%>();
+		DBConnection conn = pool.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = conn.prepareStatement(sql);
+			for (int i = 0; i < valueList.length; i++) {
+				SqlConstructUtil.__safeSetInt(ps, i+1, valueList[i]);
 			}
 			rs = ps.executeQuery();
 			while (rs.next()) {
